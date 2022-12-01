@@ -1,0 +1,2 @@
+# ignore built rust files
+target
