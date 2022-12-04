@@ -6,13 +6,10 @@ fn main() {
     // Part one
     let mut included_section_assignment_count: u32 = 0;
     // Split input into lines
-    let lines: Vec<&str> = input.split("\n").collect();
+    let lines = input.split('\n');
 
     // Split input into pairs
-    let pairs: Vec<(&str, &str)> = lines
-        .into_iter()
-        .map(|line| line.split_once(",").unwrap())
-        .collect();
+    let pairs = lines.into_iter().map(|line| line.split_once(',').unwrap());
 
     // Parse sections into numbers: e.g. "3-10" -> [3, 10]
     let parsed_pairs: Vec<([u32; 2], [u32; 2])> = pairs
@@ -36,7 +33,7 @@ fn main() {
 
     // Part two: count the number of overlapping sections
     let mut overlapping_section_assignment_count: u32 = 0;
-    for (left_pair, right_pair) in parsed_pairs.clone().into_iter() {
+    for (left_pair, right_pair) in parsed_pairs.into_iter() {
         if check_overlap(&left_pair, &right_pair) {
             overlapping_section_assignment_count += 1;
         }
@@ -68,13 +65,11 @@ fn check_overlap(left_section: &[u32; 2], right_section: &[u32; 2]) -> bool {
 
     let right_overlap = right_low_overlap || right_high_overlap || right_included_overlap;
 
-    let has_overlap = left_overlap || right_overlap;
-
-    has_overlap
+    left_overlap || right_overlap
 }
 
 fn parse_section(section: &str) -> Option<[u32; 2]> {
-    let section = section.split_once("-");
+    let section = section.split_once('-');
     let first = section?.0.parse::<u32>();
     let second = section?.1.parse::<u32>();
     match (first, second) {
