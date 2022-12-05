@@ -10,7 +10,7 @@ pub enum Error {
     InvalidNumber(#[from] ParseIntError),
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 struct Move {
     count: usize,
     from: usize,
@@ -39,19 +39,9 @@ impl FromStr for Move {
     }
 }
 
-impl Default for Move {
-    fn default() -> Self {
-        Move {
-            count: 0,
-            from: 0,
-            to: 0,
-        }
-    }
-}
-
 impl Move {
     // Part one
-    fn move_stacks(stacks: &mut Vec<Vec<&str>>, stack_move: Move) {
+    fn move_stacks(stacks: &mut [Vec<&str>], stack_move: Move) {
         (0..stack_move.count).for_each(|_| {
             if let Some(popped) = stacks[stack_move.from].pop() {
                 stacks[stack_move.to].push(popped);
@@ -60,7 +50,7 @@ impl Move {
     }
 
     // Part two
-    fn move_stacks_keep_order(stacks: &mut Vec<Vec<&str>>, stack_move: Move) {
+    fn move_stacks_keep_order(stacks: &mut [Vec<&str>], stack_move: Move) {
         let mut temp_stack = Vec::new();
         (0..stack_move.count).for_each(|_| {
             if let Some(popped) = stacks[stack_move.from].pop() {
