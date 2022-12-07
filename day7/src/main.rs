@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, PartialEq, Clone)]
 struct FileTree<'a> {
     nodes: HashMap<u32, FileTreeNode<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Default, Clone)]
 struct FileTreeNode<'a> {
-    children: HashMap<&'a str, Vec<FileTreeNodeChildren<'a>>>,
+    children: HashMap<&'a str, Vec<FileTreeNodeChild<'a>>>,
 }
 
-#[derive(Debug)]
-struct FileTreeNodeChildren<'a> {
-    parent_dir: &'a str,
-    name: &'a str,
+#[derive(Debug, PartialEq, Clone, Default)]
+struct FileTreeNodeChild<'a> {
+    parent_dirs: Vec<&'a str>,
+    _name: &'a str,
     size: u32,
 }
 
@@ -24,25 +24,165 @@ impl<'a> FileTreeNode<'a> {
         }
     }
 
-    fn insert_file(node: &mut Self, file: FileTreeNodeChildren<'a>) {
-        if let Some(files) = node.children.get_mut(file.parent_dir) {
-            files.push(file)
-        };
+    fn insert_file(node: &mut Self, file: FileTreeNodeChild<'a>) {
+        if let Some(parent_dir) = file.parent_dirs.last() {
+            if let Some(files) = node.children.get_mut(parent_dir) {
+                files.push(file);
+            } else {
+                node.children.insert(parent_dir, vec![file]);
+            }
+        }
     }
 }
 
 impl FileTree<'_> {
-    fn new() -> Self {
+    pub fn new() -> Self {
         FileTree {
             nodes: HashMap::new(),
         }
     }
 
-    fn insert_dir(tree: &mut Self, depth: u32) {
-        tree.nodes.insert(depth, FileTreeNode::new());
+    fn insert_depth(tree: &mut Self, depth: u32) {
+        if tree.nodes.get(&depth).is_none() {
+            tree.nodes.insert(depth, FileTreeNode::new());
+        }
     }
 }
 
 fn main() {
-    println!("Hello, world!");
+    let input = include_str!("input.txt");
+    let lines = input.lines();
+    let mut tree = FileTree::new();
+    let mut current_depth = 0;
+    let mut current_dirs: Vec<&str> = vec!["/"];
+
+    lines.into_iter().for_each(|line| {
+        let parts: Vec<&str> = line.split_whitespace().into_iter().collect();
+        if let Some(command) = parts.first() {
+            if *command == "$" {
+                if let Some(&"cd") = parts.get(1) {
+                    match parts.get(2) {
+                        Some(&"/") => {
+                            current_depth = 0;
+                            current_dirs.clear();
+                            current_dirs.push("/");
+                        }
+                        Some(&"..") => {
+                            current_depth -= 1;
+                            current_dirs.pop();
+                        }
+                        Some(dirname) => {
+                            current_depth += 1;
+                            current_dirs.push(dirname);
+                        }
+                        _ => {}
+                    }
+                }
+            } else {
+                match parts.first() {
+                    Some(&"dir") => {}
+                    Some(size) => {
+                        FileTree::insert_depth(&mut tree, current_depth);
+                        if let Some(filename) = parts.get(1) {
+                            let file = FileTreeNodeChild {
+                                parent_dirs: current_dirs.clone(),
+                                _name: filename,
+                                size: size.parse().unwrap(),
+                            };
+                            if let Some(node) = tree.nodes.get_mut(&current_depth) {
+                                FileTreeNode::insert_file(node, file);
+                            }
+                        };
+                    }
+                    _ => {}
+                }
+            }
+        }
+    });
+
+    let count: u32 = part_one(tree);
+
+    println!("{:#?}", count);
+}
+
+fn compute_dir_sizes(tree: FileTree) -> HashMap<&str, u32> {
+    let mut hash_tree_count: HashMap<&str, u32> = HashMap::new();
+
+    tree.nodes.into_values().for_each(|node| {
+        node.children.into_values().for_each(|files| {
+            files.iter().for_each(|file| {
+                file.parent_dirs.clone().into_iter().for_each(|parent_dir| {
+                    if let Some(count) = hash_tree_count.get_mut(&parent_dir) {
+                        *count += file.size;
+                    } else {
+                        hash_tree_count.insert(parent_dir, file.size);
+                    }
+                })
+            })
+        })
+    });
+
+    print!("{:#?}", hash_tree_count);
+    hash_tree_count
+}
+
+fn part_one(tree: FileTree) -> u32 {
+    let hash_tree_count = compute_dir_sizes(tree);
+
+    let count: u32 = hash_tree_count
+        .into_values()
+        .filter(|size| *size <= 100_000)
+        .sum();
+
+    count
+}
+
+#[cfg(test)]
+#[test]
+fn test_file_tree() {
+    let mut tree = FileTree::new();
+
+    FileTree::insert_depth(&mut tree, 1);
+
+    if let Some(node) = tree.nodes.get_mut(&1) {
+        let file_one = FileTreeNodeChild {
+            parent_dirs: vec!["/", "dir1"],
+            _name: "file1.txt",
+            size: 100,
+        };
+
+        let file_two = FileTreeNodeChild {
+            parent_dirs: vec!["/", "dir1"],
+            _name: "file2.txt",
+            size: 200,
+        };
+
+        FileTreeNode::insert_file(node, file_one.clone());
+        FileTreeNode::insert_file(node, file_two.clone());
+    };
+
+    let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
+    assert_eq!(test_file_size, 600);
+
+    FileTree::insert_depth(&mut tree, 2);
+
+    if let Some(node) = tree.nodes.get_mut(&2) {
+        let file_one = FileTreeNodeChild {
+            parent_dirs: vec!["/", "dir1", "dir2"],
+            _name: "file1.txt",
+            size: 300,
+        };
+
+        let file_two = FileTreeNodeChild {
+            parent_dirs: vec!["/", "dir1", "dir2"],
+            _name: "file2.txt",
+            size: 500,
+        };
+
+        FileTreeNode::insert_file(node, file_one.clone());
+        FileTreeNode::insert_file(node, file_two.clone());
+    };
+
+    let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
+    assert_eq!(test_file_size, 800 + (300 + 800) + 300 + 800);
 }
