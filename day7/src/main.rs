@@ -127,7 +127,6 @@ fn compute_dir_sizes(tree: FileTree) -> HashMap<&str, u32> {
         })
     });
 
-    print!("{:#?}", hash_tree_count);
     hash_tree_count
 }
 
