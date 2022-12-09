@@ -20,18 +20,15 @@ fn main() {
     let mut res: u32 = 0;
     let input = fs::read_to_string("src/input.txt").expect("Input file should be readable");
 
-    let lines: Vec<&str> = input.split("\n").collect();
-
     // split lines into vectors of strings divided by whitespace and execute compute_duel
-    lines
-        .into_iter()
+    input
+        .split('\n')
         .map(|x| x.split_whitespace().collect::<Vec<&str>>())
         .for_each(|x| {
             print!("{:?}", x);
             let duel_result = compute_duel_second_part(x[0], x[1]);
-            match duel_result {
-                Ok(result) => res += result,
-                Err(_) => (),
+            if let Ok(result) = duel_result {
+                res += result
             }
         });
     print!("{}", res);

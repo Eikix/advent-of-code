@@ -5,7 +5,7 @@ fn main() {
     let second_input = fs::read_to_string("src/input2.txt").expect("Input 2 should be readable");
 
     // Part one
-    let part_one_rucksacks: Vec<&str> = first_input.split("\n").collect();
+    let part_one_rucksacks: Vec<&str> = first_input.split('\n').collect();
     let mut first_result: u32 = 0;
     for rucksack in part_one_rucksacks.into_iter() {
         let (first_compartment, second_compartment) = split_str_in_half(rucksack);
@@ -20,11 +20,11 @@ fn main() {
     println!("Part One Result: {}", first_result);
 
     // Part two
-    let part_two_rucksacks: Vec<&str> = second_input.split("\n").collect();
+
     let mut second_result: u32 = 0;
-    let occurence_maps = part_two_rucksacks
-        .into_iter()
-        .map(|rucksack| compartment_occurrence_map(rucksack))
+    let occurence_maps = second_input
+        .split('\n')
+        .map(compartment_occurrence_map)
         .collect::<Vec<HashMap<char, u32>>>();
 
     for (i, _) in occurence_maps.iter().enumerate() {
@@ -62,7 +62,7 @@ fn compare_occurence_maps(
 ) -> u32 {
     let mut result: u32 = 0;
     first_occurence_map.clone().into_keys().for_each(|x| {
-        if check_occurence_map(&second_occurence_map, x) {
+        if check_occurence_map(second_occurence_map, x) {
             result += compute_priority(x);
         }
     });

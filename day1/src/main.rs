@@ -5,14 +5,14 @@ fn main() {
     let input = fs::read_to_string("src/input.txt").expect("input.txt should be readable");
 
     // split input into lines
-    let lines: Vec<&str> = input.split("\n").collect();
+    let lines: Vec<&str> = input.split('\n').collect();
 
     // split lines into vectors of numbers divided by whitespace
     let mut elves: Vec<Vec<i32>> = Vec::new();
     elves.push(Vec::new());
     let mut counter = 0;
     for line in lines.into_iter() {
-        if line == "" {
+        if line.is_empty() {
             counter += 1;
             elves.push(Vec::new());
             continue;

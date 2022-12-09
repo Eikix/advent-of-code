@@ -85,22 +85,22 @@ mod tests {
     #[test]
     fn test_check_overlap() {
         // With overlap on the left
-        assert_eq!(check_overlap(&[1, 5], &[3, 7]), true);
+        assert!(check_overlap(&[1, 5], &[3, 7]));
 
         // With no overlap
-        assert_eq!(check_overlap(&[1, 5], &[6, 7]), false);
+        assert!(!check_overlap(&[1, 5], &[6, 7]));
 
         // With overlap on the right
-        assert_eq!(check_overlap(&[3, 7], &[1, 5]), true);
+        assert!(check_overlap(&[3, 7], &[1, 5]));
 
         // With "inclusive" overlap
-        assert_eq!(check_overlap(&[1, 7], &[3, 5]), true);
-        assert_eq!(check_overlap(&[3, 5], &[1, 7]), true);
+        assert!(check_overlap(&[1, 7], &[3, 5]));
+        assert!(check_overlap(&[3, 5], &[1, 7]));
 
         // Edge cases
-        assert_eq!(check_overlap(&[1, 5], &[1, 5]), true);
-        assert_eq!(check_overlap(&[1, 1], &[2, 2]), false);
-        assert_eq!(check_overlap(&[1, 2], &[2, 2]), true);
+        assert!(check_overlap(&[1, 5], &[1, 5]));
+        assert!(!check_overlap(&[1, 1], &[2, 2]));
+        assert!(check_overlap(&[1, 2], &[2, 2]));
     }
 
     #[test]
@@ -116,13 +116,13 @@ mod tests {
     #[test]
     fn test_check_inclusion() {
         let included = check_inclusion(&[1, 5], &[1, 10]);
-        assert_eq!(included, true);
+        assert!(included);
 
         let right_included = check_inclusion(&[5, 15], &[6, 10]);
         // This is false as check_inclusion checks if the first section is included in the second
-        assert_eq!(right_included, false);
+        assert!(!right_included);
 
         let non_included = check_inclusion(&[1, 5], &[2, 10]);
-        assert_eq!(non_included, false);
+        assert!(!non_included);
     }
 }

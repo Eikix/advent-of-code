@@ -20,6 +20,8 @@ enum MoveCommand {
     Right,
 }
 
+type Coordinates = (i32, i32);
+
 fn main() {
     let input = include_str!("input.txt");
 
@@ -51,7 +53,7 @@ fn parse_command(command: &str) -> Result<Vec<MoveCommand>, Error> {
     }
 }
 
-fn move_head(move_command: &MoveCommand, head: (i32, i32)) -> (i32, i32) {
+fn move_head(move_command: &MoveCommand, head: Coordinates) -> Coordinates {
     match move_command {
         MoveCommand::Up => (head.0, head.1 + 1),
         MoveCommand::Down => (head.0, head.1 - 1),
@@ -60,7 +62,7 @@ fn move_head(move_command: &MoveCommand, head: (i32, i32)) -> (i32, i32) {
     }
 }
 
-fn move_tail(tail: (i32, i32), head: (i32, i32)) -> Result<(i32, i32), Error<'static>> {
+fn move_tail(tail: Coordinates, head: Coordinates) -> Result<Coordinates, Error<'static>> {
     /*
     If the head is ever two steps directly up, down, left,
     or right from the tail,
@@ -125,9 +127,9 @@ fn move_tail(tail: (i32, i32), head: (i32, i32)) -> Result<(i32, i32), Error<'st
 
 fn move_snake(
     move_command: &MoveCommand,
-    head: (i32, i32),
-    tail: (i32, i32),
-) -> Result<((i32, i32), (i32, i32)), Error<'static>> {
+    head: Coordinates,
+    tail: Coordinates,
+) -> Result<(Coordinates, Coordinates), Error<'static>> {
     let new_head = move_head(move_command, head);
     let new_tail = move_tail(tail, new_head)?;
     Ok((new_head, new_tail))

@@ -14,7 +14,7 @@ fn main() {
     println!("{:?}", max_scenic_score);
 }
 
-fn count_visible_cells(grid: &Vec<&[u8]>) -> u32 {
+fn count_visible_cells(grid: &[&[u8]]) -> u32 {
     let mut res = 0;
     grid.iter().enumerate().for_each(|(i, row)| {
         row.iter().enumerate().for_each(|(j, _)| {
@@ -37,7 +37,7 @@ fn parse_input(input: &str) -> Vec<Vec<u8>> {
         .collect::<Vec<Vec<u8>>>()
 }
 
-fn is_cell_visible_from_outside_grid(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> bool {
+fn is_cell_visible_from_outside_grid(grid: &[&[u8]], coordinates: (usize, usize)) -> bool {
     let mut res = (true, true, true, true);
     let (x, y) = coordinates;
     let cell_row: &[u8] = grid.get(x).unwrap();
@@ -64,7 +64,7 @@ fn is_cell_visible_from_outside_grid(grid: &Vec<&[u8]>, coordinates: (usize, usi
     res.0 || res.1 || res.2 || res.3
 }
 
-fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> usize {
+fn compute_cell_scenic_score(grid: &[&[u8]], coordinates: (usize, usize)) -> usize {
     let (x, y) = coordinates;
     let (mut left, mut right, mut up, mut down): (usize, usize, usize, usize) =
         (y, grid.len() - y - 1, x, grid.len() - x - 1);
@@ -95,7 +95,7 @@ fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> 
     left * right * up * down
 }
 
-fn compute_max_scenic_score(grid: &Vec<&[u8]>) -> usize {
+fn compute_max_scenic_score(grid: &[&[u8]]) -> usize {
     let mut res = 0;
     grid.iter().enumerate().for_each(|(i, row)| {
         row.iter().enumerate().for_each(|(j, _)| {
