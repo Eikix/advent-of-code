@@ -68,6 +68,7 @@ fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> 
     let (x, y) = coordinates;
     let (mut left, mut right, mut up, mut down): (usize, usize, usize, usize) =
         (y, grid.len() - y - 1, x, grid.len() - x - 1);
+    let (mut right_stopped, mut down_stopped) = (false, false);
     let cell_row: &[u8] = grid.get(x).unwrap();
     let cell: u8 = *cell_row.get(y).unwrap();
     // case right and left
@@ -75,8 +76,9 @@ fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> 
         if i < y && c >= cell {
             left = y - i;
         }
-        if i > y && c >= cell {
+        if i > y && c >= cell && !right_stopped {
             right = i - y;
+            right_stopped = true;
         }
     });
     // case up and down
@@ -84,8 +86,9 @@ fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> 
         if i < x && row[y] >= cell {
             up = x - i;
         }
-        if i > x && row[y] >= cell {
+        if i > x && row[y] >= cell && !down_stopped {
             down = i - x;
+            down_stopped = true;
         }
     });
 

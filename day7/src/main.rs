@@ -52,6 +52,13 @@ impl FileTree<'_> {
 fn main() {
     let input = include_str!("input.txt");
     let lines = input.lines();
+    let tree = construct_tree(lines.collect());
+    let count: u32 = part_one(tree);
+
+    println!("{:#?}", count);
+}
+
+fn construct_tree(lines: Vec<&str>) -> FileTree {
     let mut tree = FileTree::new();
     let mut current_depth = 0;
     let mut current_dirs: Vec<&str> = vec!["/"];
@@ -100,9 +107,7 @@ fn main() {
         }
     });
 
-    let count: u32 = part_one(tree);
-
-    println!("{:#?}", count);
+    tree
 }
 
 fn compute_dir_sizes(tree: FileTree) -> HashMap<&str, u32> {
@@ -138,51 +143,85 @@ fn part_one(tree: FileTree) -> u32 {
 }
 
 #[cfg(test)]
-#[test]
-fn test_file_tree() {
-    let mut tree = FileTree::new();
+mod tests {
+    use super::*;
+    #[test]
+    fn test_file_tree() {
+        let mut tree = FileTree::new();
 
-    FileTree::insert_depth(&mut tree, 1);
+        FileTree::insert_depth(&mut tree, 1);
 
-    if let Some(node) = tree.nodes.get_mut(&1) {
-        let file_one = FileTreeNodeChild {
-            parent_dirs: vec!["/", "dir1"],
-            _name: "file1.txt",
-            size: 100,
+        if let Some(node) = tree.nodes.get_mut(&1) {
+            let file_one = FileTreeNodeChild {
+                parent_dirs: vec!["/", "dir1"],
+                _name: "file1.txt",
+                size: 100,
+            };
+
+            let file_two = FileTreeNodeChild {
+                parent_dirs: vec!["/", "dir1"],
+                _name: "file2.txt",
+                size: 200,
+            };
+
+            FileTreeNode::insert_file(node, file_one.clone());
+            FileTreeNode::insert_file(node, file_two.clone());
         };
 
-        let file_two = FileTreeNodeChild {
-            parent_dirs: vec!["/", "dir1"],
-            _name: "file2.txt",
-            size: 200,
+        let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
+        assert_eq!(test_file_size, 600);
+
+        FileTree::insert_depth(&mut tree, 2);
+
+        if let Some(node) = tree.nodes.get_mut(&2) {
+            let file_one = FileTreeNodeChild {
+                parent_dirs: vec!["/", "dir1", "dir2"],
+                _name: "file1.txt",
+                size: 300,
+            };
+
+            let file_two = FileTreeNodeChild {
+                parent_dirs: vec!["/", "dir1", "dir2"],
+                _name: "file2.txt",
+                size: 500,
+            };
+
+            FileTreeNode::insert_file(node, file_one.clone());
+            FileTreeNode::insert_file(node, file_two.clone());
         };
 
-        FileTreeNode::insert_file(node, file_one.clone());
-        FileTreeNode::insert_file(node, file_two.clone());
-    };
+        let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
+        assert_eq!(test_file_size, 800 + (300 + 800) + 300 + 800);
+    }
 
-    let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
-    assert_eq!(test_file_size, 600);
-
-    FileTree::insert_depth(&mut tree, 2);
-
-    if let Some(node) = tree.nodes.get_mut(&2) {
-        let file_one = FileTreeNodeChild {
-            parent_dirs: vec!["/", "dir1", "dir2"],
-            _name: "file1.txt",
-            size: 300,
-        };
-
-        let file_two = FileTreeNodeChild {
-            parent_dirs: vec!["/", "dir1", "dir2"],
-            _name: "file2.txt",
-            size: 500,
-        };
-
-        FileTreeNode::insert_file(node, file_one.clone());
-        FileTreeNode::insert_file(node, file_two.clone());
-    };
-
-    let test_file_size: u32 = compute_dir_sizes(tree.clone()).into_values().sum();
-    assert_eq!(test_file_size, 800 + (300 + 800) + 300 + 800);
+    #[test]
+    fn integration_test() {
+        let input_str = "$ cd /\n\
+                        $ ls\n\
+                        dir a\n\
+                        14848514 b.txt\n\
+                        8504156 c.dat\n\
+                        dir d\n\
+                        $ cd a\n\
+                        $ ls\n\
+                        dir e\n\
+                        29116 f\n\
+                        2557 g\n\
+                        62596 h.lst\n\
+                        $ cd e\n\
+                        $ ls\n\
+                        584 i\n\
+                        $ cd ..\n\
+                        $ cd ..\n\
+                        $ cd d\n\
+                        $ ls\n\
+                        4060174 j\n\
+                        8033020 d.log\n\
+                        5626152 d.ext\n\
+                        7214296 k\n";
+        let lines = input_str.lines();
+        let tree = construct_tree(lines.collect());
+        let count: u32 = part_one(tree);
+        assert_eq!(count, 95437);
+    }
 }
