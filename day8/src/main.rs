@@ -6,9 +6,12 @@ fn main() {
         .map(|row| row.as_slice())
         .collect::<Vec<&[u8]>>();
 
-    println!("{:?}", grid_as_slice);
     let res = count_visible_cells(&grid_as_slice);
     println!("{:?}", res);
+
+    // part two
+    let max_scenic_score = compute_max_scenic_score(&grid_as_slice);
+    println!("{:?}", max_scenic_score);
 }
 
 fn count_visible_cells(grid: &Vec<&[u8]>) -> u32 {
@@ -59,6 +62,47 @@ fn is_cell_visible_from_outside_grid(grid: &Vec<&[u8]>, coordinates: (usize, usi
     });
 
     res.0 || res.1 || res.2 || res.3
+}
+
+fn compute_cell_scenic_score(grid: &Vec<&[u8]>, coordinates: (usize, usize)) -> usize {
+    let (x, y) = coordinates;
+    let (mut left, mut right, mut up, mut down): (usize, usize, usize, usize) =
+        (y, grid.len() - y - 1, x, grid.len() - x - 1);
+    let cell_row: &[u8] = grid.get(x).unwrap();
+    let cell: u8 = *cell_row.get(y).unwrap();
+    // case right and left
+    cell_row.iter().enumerate().for_each(|(i, &c)| {
+        if i < y && c >= cell {
+            left = y - i;
+        }
+        if i > y && c >= cell {
+            right = i - y;
+        }
+    });
+    // case up and down
+    grid.iter().enumerate().for_each(|(i, row)| {
+        if i < x && row[y] >= cell {
+            up = x - i;
+        }
+        if i > x && row[y] >= cell {
+            down = i - x;
+        }
+    });
+
+    left * right * up * down
+}
+
+fn compute_max_scenic_score(grid: &Vec<&[u8]>) -> usize {
+    let mut res = 0;
+    grid.iter().enumerate().for_each(|(i, row)| {
+        row.iter().enumerate().for_each(|(j, _)| {
+            let score = compute_cell_scenic_score(grid, (i, j));
+            if score > res {
+                res = score;
+            }
+        })
+    });
+    res
 }
 
 // unit tests
@@ -131,7 +175,7 @@ mod tests {
         assert!(is_cell_visible_from_outside_grid(&test_grid, (2, 3)));
         assert!(is_cell_visible_from_outside_grid(&test_grid, (3, 2)));
         assert!(is_cell_visible_from_outside_grid(&test_grid, (3, 3)));
-        assert_eq!(count_visible_cells(&test_grid), 24);
+        assert_eq!(count_visible_cells(&test_grid), 23);
     }
 
     #[test]
@@ -161,5 +205,20 @@ mod tests {
         assert!(is_cell_visible_from_outside_grid(&test_grid, (3, 3)));
         assert!(is_cell_visible_from_outside_grid(&test_grid, (3, 4)));
         assert_eq!(count_visible_cells(&test_grid), 94);
+    }
+
+    #[test]
+    fn test_scenic_score() {
+        let test_input = "30373\n\
+                          25512\n\
+                          65332\n\
+                          33549\n\
+                          35390";
+        let test_grid = parse_input(test_input);
+        let test_grid = test_grid
+            .iter()
+            .map(|row| row.as_slice())
+            .collect::<Vec<&[u8]>>();
+        assert_eq!(compute_max_scenic_score(&test_grid), 8);
     }
 }
