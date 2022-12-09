@@ -50,10 +50,10 @@ fn is_cell_visible_from_outside_grid(grid: &Vec<&[u8]>, coordinates: (usize, usi
     });
     // case up and down
     grid.iter().enumerate().for_each(|(i, row)| {
-        if i < x && row[y] > cell {
+        if i < x && row[y] >= cell {
             res.2 = false;
         }
-        if i > x && row[y] > cell {
+        if i > x && row[y] >= cell {
             res.3 = false;
         }
     });
@@ -65,6 +65,21 @@ fn is_cell_visible_from_outside_grid(grid: &Vec<&[u8]>, coordinates: (usize, usi
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_input() {
+        let test_input = "30373\n\
+                          25512\n\
+                          65332\n\
+                          33549\n\
+                          35390";
+        let test_grid = parse_input(test_input);
+        let test_grid = test_grid
+            .iter()
+            .map(|row| row.as_slice())
+            .collect::<Vec<&[u8]>>();
+        assert_eq!(count_visible_cells(&test_grid), 21);
+    }
 
     #[test]
     fn test_is_cell_visible_from_outside_grid() {
