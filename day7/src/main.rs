@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Default, Debug, PartialEq, Clone)]
 struct FileTree<'a> {
@@ -7,10 +7,10 @@ struct FileTree<'a> {
 
 #[derive(Debug, PartialEq, Default, Clone)]
 struct FileTreeNode<'a> {
-    children: HashMap<&'a str, Vec<FileTreeNodeChild<'a>>>,
+    children: HashMap<&'a str, HashSet<FileTreeNodeChild<'a>>>,
 }
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Default)]
 struct FileTreeNodeChild<'a> {
     parent_dirs: Vec<&'a str>,
     _name: &'a str,
@@ -27,9 +27,11 @@ impl<'a> FileTreeNode<'a> {
     fn insert_file(node: &mut Self, file: FileTreeNodeChild<'a>) {
         if let Some(parent_dir) = file.parent_dirs.last() {
             if let Some(files) = node.children.get_mut(parent_dir) {
-                files.push(file);
+                files.insert(file);
             } else {
-                node.children.insert(parent_dir, vec![file]);
+                let mut files = HashSet::new();
+                files.insert(file.clone());
+                node.children.insert(parent_dir, files);
             }
         }
     }
@@ -75,8 +77,13 @@ fn construct_tree(lines: Vec<&str>) -> FileTree {
                             current_dirs.push("/");
                         }
                         Some(&"..") => {
-                            current_depth -= 1;
-                            current_dirs.pop();
+                            if current_depth > 0 {
+                                current_depth -= 1;
+                                current_dirs.pop();
+                                if current_dirs.is_empty() {
+                                    current_dirs.push("/");
+                                }
+                            }
                         }
                         Some(dirname) => {
                             current_depth += 1;
@@ -132,6 +139,8 @@ fn compute_dir_sizes(tree: FileTree) -> HashMap<&str, u32> {
 
 fn part_one(tree: FileTree) -> u32 {
     let hash_tree_count = compute_dir_sizes(tree);
+
+    println!("{:#?}", hash_tree_count);
 
     let count: u32 = hash_tree_count
         .into_values()
@@ -222,5 +231,12 @@ mod tests {
         let tree = construct_tree(lines.collect());
         let count: u32 = part_one(tree);
         assert_eq!(count, 95437);
+    }
+
+    #[test]
+    fn test_input() {
+        let input_str = include_str!("input.txt");
+        let lines = input_str.lines();
+        assert_eq!(lines.count(), 942);
     }
 }
