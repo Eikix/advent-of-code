@@ -24,7 +24,7 @@ impl ElfCPU {
             current_cycle: 1,
             command_stack: Vec::new(),
             x_value: 1,
-            max_cycle: 1,
+            max_cycle: 0,
         }
     }
 
@@ -63,6 +63,9 @@ fn main() {
     let input = include_str!("input.txt");
     let res = part_one(input);
     println!("Part one: {}", res);
+
+    let res = part_two(input);
+    println!("Part two: \n{}", res);
 }
 
 fn parse_input(input: &str) -> ElfCPU {
@@ -101,6 +104,31 @@ fn part_one(input: &str) -> i32 {
 
     cycles.iter().zip(x_values.iter()).map(|(a, b)| a * b).sum()
 }
+
+fn part_two(input: &str) -> String {
+    let mut cpu = parse_input(input);
+    let mut res = String::new();
+    let cycles: Vec<i32> = vec![41, 81, 121, 161, 201, 241];
+
+    // dirty
+    let mut count = 0;
+
+    while cpu.max_cycle > 1 {
+        let sprite = vec![cpu.x_value - 1, cpu.x_value, cpu.x_value + 1];
+        cpu.tick();
+        if sprite.contains(&count) {
+            res.push('#');
+        } else {
+            res.push('.');
+        }
+        count += 1;
+        if cycles.contains(&(cpu.current_cycle as i32)) {
+            res.push('\n');
+            count = 0;
+        }
+    }
+    res
+}
 #[cfg(test)]
 
 mod tests {
@@ -112,5 +140,13 @@ mod tests {
         let input = include_str!("test_input.txt");
         let res = part_one(input);
         assert_eq!(res, 13140);
+    }
+
+    #[test]
+    fn print_crt_test() {
+        let input = include_str!("test_input.txt");
+        let res = part_two(input);
+        println!("{}", res);
+        panic!("lol");
     }
 }
