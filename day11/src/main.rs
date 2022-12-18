@@ -1,7 +1,7 @@
 #[derive(Clone, PartialEq, Debug)]
 struct Monkeys {
     monkeys: Vec<Monkey>,
-    inspection_counts: Vec<u32>,
+    inspection_counts: Vec<u128>,
 }
 
 impl Monkeys {
@@ -19,7 +19,7 @@ impl Monkeys {
 
     fn play_round(&mut self) {
         for index in 0..self.monkeys.len() {
-            let mut new_items: Vec<(usize, u32)> = Vec::new();
+            let mut new_items: Vec<(usize, u128)> = Vec::new();
             for item in self.monkeys[index].items.iter() {
                 let inspected_item = self.monkeys[index].inspect(*item);
 
@@ -43,19 +43,54 @@ impl Monkeys {
             }
         }
     }
+
+    fn play_round_part_two(&mut self) {
+        let lcm = self
+            .monkeys
+            .iter()
+            .fold(1, |acc, monkey| lcm(acc, monkey.divisible_condition_factor));
+        for index in 0..self.monkeys.len() {
+            let mut new_items: Vec<(usize, u128)> = Vec::new();
+            for item in self.monkeys[index].items.iter() {
+                let inspected_item = self.monkeys[index].inspect_part_two(*item);
+
+                // increment inspection count
+                self.inspection_counts[index] += 1;
+
+                // get monkey to throw to
+                let target_monkey = self.monkeys[index].throw_target(inspected_item);
+
+                let item_reduced = inspected_item % lcm;
+
+                new_items.push((target_monkey as usize, item_reduced));
+            }
+
+            // Clearing monkey's items
+            self.monkeys[index].items.clear();
+
+            for (target_monkey, item) in new_items {
+                // Get a mutable reference to the target monkey
+
+                let target_monkey = &mut self.monkeys[target_monkey];
+
+                // Add the item to the target monkey's items
+                target_monkey.items.push(item);
+            }
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
 struct Monkey {
-    items: Vec<u32>,
-    inspection_factor: (char, u32),
-    divisible_condition_factor: u32,
+    items: Vec<u128>,
+    inspection_factor: (char, u128),
+    divisible_condition_factor: u128,
     // If true, throw item to target_monkeys.0, else target_monkeys.1
     target_monkeys: (u8, u8),
 }
 
 impl Monkey {
-    fn inspect(&self, item: u32) -> u32 {
+    fn inspect(&self, item: u128) -> u128 {
         match self.inspection_factor.0 {
             '+' => {
                 // quick and dirty way to implement new = old + old / old * old
@@ -77,11 +112,34 @@ impl Monkey {
         }
     }
 
-    fn divisible(&self, item: u32) -> bool {
+    fn inspect_part_two(&self, item: u128) -> u128 {
+        match self.inspection_factor.0 {
+            '+' => {
+                // quick and dirty way to implement new = old + old / old * old
+                if self.inspection_factor.1 == 0 {
+                    item + item
+                } else {
+                    item + self.inspection_factor.1
+                }
+            }
+            '*' => {
+                // quick and dirty way to implement new = old + old / old * old
+                if self.inspection_factor.1 == 0 {
+                    item * item
+                } else {
+                    item * self.inspection_factor.1
+                }
+            }
+            // todo: replace by proper error handling
+            _ => panic!("Invalid inspection factor"),
+        }
+    }
+
+    fn divisible(&self, item: u128) -> bool {
         item % self.divisible_condition_factor == 0
     }
 
-    fn throw_target(&self, inspected_item: u32) -> u8 {
+    fn throw_target(&self, inspected_item: u128) -> u8 {
         if self.divisible(inspected_item) {
             self.target_monkeys.0
         } else {
@@ -92,7 +150,7 @@ impl Monkey {
 
 fn parse_monkey(input: &str) -> Monkey {
     let mut lines = input.lines().skip(1);
-    let items: Vec<u32> = lines
+    let items: Vec<u128> = lines
         .next()
         .unwrap()
         .strip_prefix("  Starting items: ")
@@ -108,7 +166,7 @@ fn parse_monkey(input: &str) -> Monkey {
         .split_once(' ')
         .unwrap();
 
-    let inspection_mul_factor: (char, u32) = (
+    let inspection_mul_factor: (char, u128) = (
         inspection_factor_unparsed
             .0
             .chars()
@@ -167,7 +225,46 @@ fn main() {
     inspection_counts.reverse();
     let highest = inspection_counts[0];
     let second_highest = inspection_counts[1];
-    println!("Total inspection count: {}", highest * second_highest);
+    println!(
+        "Part one - Total inspection count: {}",
+        highest * second_highest
+    );
+
+    // part two
+    let mut monkeys_part_two = parse_input(input);
+    for _ in 0..10000 {
+        monkeys_part_two.play_round_part_two();
+    }
+    let mut inspection_counts = monkeys_part_two.inspection_counts.clone();
+    inspection_counts.sort();
+    inspection_counts.reverse();
+    let highest = inspection_counts[0];
+    let second_highest = inspection_counts[1];
+    println!(
+        "Part Two - Total inspection count: {}",
+        highest * second_highest
+    );
+}
+
+fn gcd(a: u128, b: u128) -> u128 {
+    if a == 0 {
+        return b;
+    }
+    if b == 0 {
+        return a;
+    }
+    let mut a = a;
+    let mut b = b;
+    while b != 0 {
+        let remainder = a % b;
+        a = b;
+        b = remainder;
+    }
+    a
+}
+
+fn lcm(a: u128, b: u128) -> u128 {
+    (a * b) / gcd(a, b)
 }
 
 #[cfg(test)]
@@ -237,7 +334,7 @@ mod tests {
     }
 
     #[test]
-    fn test_integration() {
+    fn test_integration_part_one() {
         let input = include_str!("test_input.txt");
         let mut monkeys = parse_input(input);
         for _ in 0..20 {
@@ -251,6 +348,36 @@ mod tests {
         let second_highest = inspection_counts[1];
         assert_eq!(highest, 105);
         assert_eq!(second_highest, 101);
-        assert_eq!(highest * second_highest, 10605)
+        assert_eq!(highest * second_highest, 10605);
+    }
+
+    #[test]
+    fn test_integration_part_two() {
+        let input = include_str!("test_input.txt");
+        let mut monkeys = parse_input(input);
+        for _ in 0..10000 {
+            monkeys.play_round_part_two()
+        }
+        // get the two highest values of inspection counts
+        let mut inspection_counts = monkeys.inspection_counts.clone();
+        inspection_counts.sort();
+        inspection_counts.reverse();
+        let highest = inspection_counts[0];
+        let second_highest = inspection_counts[1];
+        assert_eq!(highest, 52166);
+        assert_eq!(second_highest, 52013);
+        assert_eq!(highest * second_highest, 2713310158);
+    }
+
+    #[test]
+    fn test_gcd() {
+        let gcd = gcd(4, 6); // gcd will be 2
+        assert_eq!(gcd, 2);
+    }
+
+    #[test]
+    fn test_lcm() {
+        let lcm = lcm(4, 6); // lcm will be 12
+        assert_eq!(lcm, 12);
     }
 }
